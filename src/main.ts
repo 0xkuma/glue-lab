@@ -66,9 +66,9 @@ export class MyStack extends Stack {
         '--TempDir': `s3://${bucket.bucketName}/temporary/`,
         '--enable-metrics': '',
         '--enable-continuous-cloudwatch-log': 'true',
-        '--enable-continuous-log-filter': 'true',
         '--job-bookmark-option': 'job-bookmark-disable',
-        '---enable-spark-ui': 'false',
+        '--enable-spark-ui': 'false',
+        '--connection_options': `s3://${bucket.bucketName}`,
       },
     });
   }
