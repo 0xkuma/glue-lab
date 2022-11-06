@@ -12,10 +12,10 @@ export class MyStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps = {}) {
     super(scope, id, props);
 
-    const labelsFile = fs.readFileSync(path.join(__dirname, 'labels.json'), 'utf8');
+    const labelsFile = fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8');
 
-    new ssm.StringParameter(this, 'labelParameter', {
-      parameterName: '/KL/label',
+    const labels = new ssm.StringParameter(this, 'labelParameter', {
+      parameterName: '/KL/config',
       stringValue: labelsFile,
     });
 
@@ -43,7 +43,7 @@ export class MyStack extends Stack {
     role.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: ['logs:*', 'glue:CreateJob'],
+        actions: ['logs:*', 'glue:CreateJob', 'ssm:GetParameter'],
         resources: ['*'],
       }),
     );
@@ -69,6 +69,7 @@ export class MyStack extends Stack {
         '--job-bookmark-option': 'job-bookmark-disable',
         '--enable-spark-ui': 'false',
         '--connection_options': `s3://${bucket.bucketName}`,
+        '--ssm_parameter_name': labels.parameterName,
       },
     });
   }
