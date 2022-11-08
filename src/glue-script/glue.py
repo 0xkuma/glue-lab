@@ -9,16 +9,16 @@ import boto3
 import json
 
 args = getResolvedOptions(
-    sys.argv, ["JOB_NAME", "connection_options", "ssm_parameter_name"])
+    sys.argv, ["JOB_NAME", "connection_options", "bucket_name"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
-ssm = boto3.client('ssm')
-response = json.loads(ssm.get_parameter(
-    Name=args['ssm_parameter_name'], WithDecryption=False)['Parameter']['Value'])
+s3 = boto3.resource('s3')
+obj = s3.Bucket(args['bucket_name']).Object('script/glue.json')
+response = json.loads(obj.get()['Body'].read().decode('utf-8'))
 tags = response['tags']
 drop_fields = response['drop_fields']
 
