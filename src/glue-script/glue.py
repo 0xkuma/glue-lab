@@ -22,6 +22,11 @@ response = json.loads(obj.get()['Body'].read().decode('utf-8'))
 tags = response['tags']
 drop_fields = response['drop_fields']
 
+f_tags = []
+for tag in tags:
+    f_tags += tags[tag]
+
+
 # Script generated for node S3 bucket
 S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
     format_options={
@@ -68,5 +73,22 @@ for tag in tags:
         },
         transformation_ctx="AmazonS3_node_{}".format(tag),
     )
+
+# Other tags which not in the list
+other_node = Filter.apply(
+    frame=drop_fields_node,
+    f=lambda row: (True if row['UsageType'] not in f_tags else False),
+    transformation_ctx="Filter_other",
+)
+glueContext.write_dynamic_frame.from_options(
+    frame=other_node.coalesce(1),
+    connection_type="s3",
+    format="csv",
+    connection_options={
+        "path": "{}/output/{}/".format(args['connection_options'], "other"),
+        "partitionKeys": [],
+    },
+    transformation_ctx="AmazonS3_node_other",
+)
 
 job.commit()
