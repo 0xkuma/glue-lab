@@ -1,6 +1,34 @@
 {
   "tags": {
-    "cw": ["CW:Requests"]
+    "KEHK": [],
+    "KerryESG": [],
+    "KFHK": [],
+    "KFMS": [],
+    "KLHK": [],
+    "KLUK": [],
+    "KPHARMA": [],
+    "KPHK": [],
+    "KWHK": [],
+    "KWMS": [],
+    "KSIS": []
   },
-  "drop_fields": []
+  "drop_fields": [
+    "InvoiceID",
+    "PayerAccountId",
+    "RecordId",
+    "Operation",
+    "AvailabilityZone",
+    "ReservedInstance",
+    "UsageStartDate",
+    "UsageEndDate",
+    "ResourceId",
+    "user_Application",
+    "Owner",
+    "user_Backup_daily",
+    "user_Company",
+    "user_Create By",
+    "user_Services",
+    "user_cpm_policy_name",
+    "user_cpm_server_id"
+  ]
 }
