@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 import { App, Stack, StackProps } from 'aws-cdk-lib';
 import * as glue from 'aws-cdk-lib/aws-glue';
@@ -7,19 +6,11 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Construct } from 'constructs';
 
 export class MyStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps = {}) {
     super(scope, id, props);
-
-    const labelsFile = fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8');
-
-    const labels = new ssm.StringParameter(this, 'labelParameter', {
-      parameterName: '/KL/config',
-      stringValue: labelsFile,
-    });
 
     const lambdaFn = new lambda.Function(this, 'lambdaFn', {
       code: lambda.Code.fromAsset(path.join(__dirname, 'lambda')),
@@ -79,7 +70,7 @@ export class MyStack extends Stack {
         '--job-bookmark-option': 'job-bookmark-disable',
         '--enable-spark-ui': 'false',
         '--connection_options': `s3://${bucket.bucketName}`,
-        '--ssm_parameter_name': labels.parameterName,
+        '--bucket_name': bucket.bucketName,
       },
     });
   }
