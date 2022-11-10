@@ -27,7 +27,7 @@ for tag in tags:
     f_tags += tags[tag]
 
 
-# Script generated for node S3 bucket
+# Filter tag which in the tag list
 S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
     format_options={
         "quoteChar": '"',
@@ -43,24 +43,29 @@ S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
 )
 
 
-def is_value_in_list(value, list):
-    for item in list:
+def is_value_in_list(value, tag):
+    print("checking value: {}, tag: {}".format(value, tags))
+    for item in tags[tag]:
         if value == item:
             return True
     return False
 
 
+print("Start drop fields")
 drop_fields_node = DropFields.apply(
     frame=S3bucket_node1,
     paths=drop_fields,
     transformation_ctx="DropFields_node",
 )
 
-
+print("Start filter tags")
 for tag in tags:
+    if len(tags[tag]) == 0:
+        continue
+    print("Start filter tag: {}".format(tag))
     node = Filter.apply(
         frame=drop_fields_node,
-        f=lambda row: (is_value_in_list(row["UsageType"], tags[tag])),
+        f=lambda row: (is_value_in_list(row["UsageType"], tag)),
         transformation_ctx="Filter_{}".format(tag),
     )
     glueContext.write_dynamic_frame.from_options(
@@ -74,10 +79,12 @@ for tag in tags:
         transformation_ctx="AmazonS3_node_{}".format(tag),
     )
 
+print("Start filter other tag")
 # Other tags which not in the list
 other_node = Filter.apply(
     frame=drop_fields_node,
-    f=lambda row: (True if row['UsageType'] not in f_tags else False),
+    f=lambda row: (True if row["UsageType"]
+                   not in f_tags or len(f_tags) == 0 else False),
     transformation_ctx="Filter_other",
 )
 glueContext.write_dynamic_frame.from_options(
