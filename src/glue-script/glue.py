@@ -48,188 +48,39 @@ drop_fields_node = DropFields.apply(
     transformation_ctx="DropFields_node",
 )
 
-KEHK_node = Filter.apply(
-    frame=drop_fields_node,
-    f=lambda row: (bool(True if row["UsageType"] in tags["KEHK"] else False)),
-    transformation_ctx="Filter_KEHK",
-)
-KerryESG_node = Filter.apply(
-    frame=drop_fields_node,
-    f=lambda row: (bool(True if row["UsageType"]
-                   in tags["KerryESG"] else False)),
-    transformation_ctx="Filter_KerryESG",
-)
-KFHK_node = Filter.apply(
-    frame=drop_fields_node,
-    f=lambda row: (bool(True if row["UsageType"] in tags["KFHK"] else False)),
-    transformation_ctx="Filter_KFHK",
-)
-# KFMS_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] in tags["KFMS"] else False),
-#     transformation_ctx="Filter_KFMS",
-# )
-# KLHK_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] in tags["KLHK"] else False),
-#     transformation_ctx="Filter_KLHK",
-# )
-# KLUK_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] in tags["KLUK"] else False),
-#     transformation_ctx="Filter_KLUK",
-# )
-# KPHARMA_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] in tags["KPHARMA"] else False),
-#     transformation_ctx="Filter_KPHARMA",
-# )
-# KWHK_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] in tags["KWHK"] else False),
-#     transformation_ctx="Filter_KWHK",
-# )
-# KWMS_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] in tags["KWMS"] else False),
-#     transformation_ctx="Filter_KWMS",
-# )
-# KSIS_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] in tags["KSIS"] else False),
-#     transformation_ctx="Filter_KSIS",
-# )
-# KPHK_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] in tags["KPHK"] else False),
-#     transformation_ctx="Filter_KPHK",
-# )
-# Other tags which not in the list
-# OTHER_node = Filter.apply(
-#     frame=drop_fields_node,
-#     f=lambda row: (True if row["UsageType"] not in f_tags else False),
-#     transformation_ctx="Filter_OTHER",
-# )
+for tag in tags:
+    filter_node = Filter.apply(
+        frame=drop_fields_node,
+        f=lambda row: (True if row["UsageType"] in tags[tag] else False),
+        transformation_ctx="Filter_{}".format(tag),
+    )
+    print("Filter_{}, count: {}".format(tag, filter_node.count()))
+    if filter_node.count() > 0:
+        glueContext.write_dynamic_frame.from_options(
+            frame=filter_node.coalesce(1),
+            connection_type="s3",
+            connection_options={
+                "path": "{}/output/{}".format(args['connection_options'], tag)},
+            format="csv",
+            transformation_ctx="AmazonS3_node_{}".format(tag),
+        )
 
-AmazonS3_KEHK = glueContext.write_dynamic_frame.from_options(
-    frame=KEHK_node.coalesce(1),
-    connection_type="s3",
-    format="csv",
-    connection_options={
-        "path": "{}/output/KEHK/".format(args['connection_options']),
-        "partitionKeys": [],
-    },
-    transformation_ctx="AmazonS3_node_KEHK",
+other_filter_node = Filter.apply(
+    frame=drop_fields_node,
+    f=lambda row: (True if row["UsageType"] not in f_tags else False),
+    transformation_ctx="Filter_OTHERS",
 )
-AmazonS3_KerryESG = glueContext.write_dynamic_frame.from_options(
-    frame=KerryESG_node.coalesce(1),
-    connection_type="s3",
-    format="csv",
-    connection_options={
-        "path": "{}/output/KerryESG/".format(args['connection_options']),
-        "partitionKeys": [],
-    },
-    transformation_ctx="AmazonS3_node_KerryESG",
-)
-AmazonS3_KFHK = glueContext.write_dynamic_frame.from_options(
-    frame=KFHK_node.coalesce(1),
-    connection_type="s3",
-    format="csv",
-    connection_options={
-        "path": "{}/output/KFHK/".format(args['connection_options']),
-        "partitionKeys": [],
-    },
-    transformation_ctx="AmazonS3_node_KFHK",
-)
-# glueContext.write_dynamic_frame.from_options(
-#     frame=KFMS_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/KFMS/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_KFMS",
-# )
-# glueContext.write_dynamic_frame.from_options(
-#     frame=KLHK_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/KLHK/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_KLHK",
-# )
-# glueContext.write_dynamic_frame.from_options(
-#     frame=KLUK_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/KLUK/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_KLUK",
-# )
-# glueContext.write_dynamic_frame.from_options(
-#     frame=KPHARMA_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/KPHARMA/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_KPHARMA",
-# )
-# glueContext.write_dynamic_frame.from_options(
-#     frame=KPHK_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/KPHK/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_KPHK",
-# )
-# glueContext.write_dynamic_frame.from_options(
-#     frame=KWHK_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/KWHK/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_KWHK",
-# )
-# glueContext.write_dynamic_frame.from_options(
-#     frame=KWMS_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/KWMS/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_KWMS",
-# )
-# glueContext.write_dynamic_frame.from_options(
-#     frame=KSIS_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/KSIS/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_KSIS",
-# )
-# glueContext.write_dynamic_frame.from_options(
-#     frame=OTHER_node.coalesce(1),
-#     connection_type="s3",
-#     format="csv",
-#     connection_options={
-#         "path": "{}/output/OTHER/".format(args['connection_options']),
-#         "partitionKeys": [],
-#     },
-#     transformation_ctx="AmazonS3_node_OTHER",
-# )
+print("Filter_OTHERS, count: {}".format(other_filter_node.count()))
+if other_filter_node.count() > 0:
+    glueContext.write_dynamic_frame.from_options(
+        frame=other_filter_node.coalesce(1),
+        connection_type="s3",
+        format="csv",
+        connection_options={
+            "path": "{}/output/OTHER/".format(args['connection_options']),
+            "partitionKeys": [],
+        },
+        transformation_ctx="AmazonS3_node_OTHER",
+    )
 
 job.commit()
