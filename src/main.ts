@@ -3,9 +3,9 @@ import { App, Stack, StackProps } from 'aws-cdk-lib';
 import * as glue from 'aws-cdk-lib/aws-glue';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import { Construct } from 'constructs';
 
 export class MyStack extends Stack {
@@ -13,6 +13,7 @@ export class MyStack extends Stack {
     super(scope, id, props);
 
     const lambdaFn = new lambda.Function(this, 'lambdaFn', {
+      functionName: 'glue-job-trigger',
       code: lambda.Code.fromAsset(path.join(__dirname, 'lambda')),
       handler: 'index.handler',
       runtime: lambda.Runtime.NODEJS_16_X,
@@ -22,7 +23,12 @@ export class MyStack extends Stack {
       bucketName: 'ecv-glue-bucket',
     });
 
-    bucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(lambdaFn));
+    lambdaFn.addEventSource(
+      new eventsources.S3EventSource(bucket, {
+        events: [s3.EventType.OBJECT_CREATED],
+        filters: [{ prefix: 'input/' }],
+      }),
+    );
 
     new s3deploy.BucketDeployment(this, 'DeployGlueScripts', {
       sources: [s3deploy.Source.asset(path.join(__dirname, 'glue-script'))],
