@@ -14,7 +14,7 @@ export class MyStack extends Stack {
 
     const lambdaFn = new lambda.Function(this, 'lambdaFn', {
       functionName: 'glue-job-trigger',
-      code: lambda.Code.fromAsset(path.join(__dirname, 'lambda')),
+      code: lambda.Code.fromAsset(path.join(__dirname, 'lambda/glue')),
       handler: 'index.handler',
       runtime: lambda.Runtime.NODEJS_16_X,
     });
@@ -68,7 +68,7 @@ export class MyStack extends Stack {
       command: jobCommandProperty,
       role: role.roleArn,
       workerType: 'G.1X',
-      numberOfWorkers: 2,
+      numberOfWorkers: 50,
       defaultArguments: {
         '--TempDir': `s3://${bucket.bucketName}/temporary/`,
         '--enable-metrics': '',
