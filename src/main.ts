@@ -8,6 +8,8 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
+let testMode: boolean = true;
+
 export class MyStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps = {}) {
     super(scope, id, props);
@@ -68,7 +70,7 @@ export class MyStack extends Stack {
       command: jobCommandProperty,
       role: role.roleArn,
       workerType: 'G.1X',
-      numberOfWorkers: 50,
+      numberOfWorkers: testMode ? 2 : 50,
       defaultArguments: {
         '--TempDir': `s3://${bucket.bucketName}/temporary/`,
         '--enable-metrics': '',
