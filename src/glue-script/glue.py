@@ -4,6 +4,7 @@ from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
+from awsglue.gluetypes import *
 import re
 import boto3
 import json
@@ -38,7 +39,7 @@ S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
     connection_type="s3",
     format="csv",
     connection_options={
-        "paths": ["{}/input".format(args['connection_options'])], "recurse": True},
+        "paths": ["{}/test".format(args['connection_options'])], "recurse": True},
     transformation_ctx="S3bucket_node1",
 )
 
@@ -48,10 +49,20 @@ drop_fields_node = DropFields.apply(
     transformation_ctx="DropFields_node",
 )
 
+
+def is_value_in_tag_list(tag, value):
+    print(tag, type(tag))
+    if value in tags[tag]:
+        return True
+    elif not isinstance(value, NullType):
+        return True
+    return False
+
+
 for tag in tags:
     filter_node = Filter.apply(
         frame=drop_fields_node,
-        f=lambda row: (True if row["UsageType"] in tags[tag] else False),
+        f=lambda row: (is_value_in_tag_list(row["user_Cost Centre"], tag)),
         transformation_ctx="Filter_{}".format(tag),
     )
     print("Filter_{}, count: {}".format(tag, filter_node.count()))
@@ -60,24 +71,24 @@ for tag in tags:
             frame=filter_node.coalesce(1),
             connection_type="s3",
             connection_options={
-                "path": "{}/output/{}".format(args['connection_options'], tag)},
+                "path": "{}/glue/output/{}".format(args['connection_options'], tag)},
             format="csv",
             transformation_ctx="AmazonS3_node_{}".format(tag),
         )
 
 other_filter_node = Filter.apply(
     frame=drop_fields_node,
-    f=lambda row: (True if row["UsageType"] not in f_tags else False),
+    f=lambda row: (True if row["user_Cost Centre"] not in f_tags else False),
     transformation_ctx="Filter_OTHERS",
 )
-print("Filter_OTHERS, count: {}".format(other_filter_node.count()))
+print("Filter_OTHER, count: {}".format(other_filter_node.count()))
 if other_filter_node.count() > 0:
     glueContext.write_dynamic_frame.from_options(
         frame=other_filter_node.coalesce(1),
         connection_type="s3",
         format="csv",
         connection_options={
-            "path": "{}/output/OTHER/".format(args['connection_options']),
+            "path": "{}/glue/output/OTHER/".format(args['connection_options']),
             "partitionKeys": [],
         },
         transformation_ctx="AmazonS3_node_OTHER",
